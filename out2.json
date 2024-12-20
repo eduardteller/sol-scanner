@@ -1,0 +1,95 @@
+[
+  {
+    "mint": {
+      "address": "AahGf8JjRTuzcnUX5Fzm3xxMXryjrunvMj6MkU2Dpump"
+    },
+    "amount": 161349444822,
+    "address": {
+      "address": "sR7ESddH68ti78BpAyDQkxi8jgwbQLBGfmNBvFFQ3pS"
+    },
+    "decimals": 6,
+    "price": 0
+  },
+  {
+    "mint": {
+      "name": "USDT",
+      "ticker": "USDT",
+      "cmcId": "825",
+      "logo": "https://raw.githubusercontent.com/trustwallet/assets/f3ffd0b9ae2165336279ce2f8db1981a55ce30f8/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+      "meta": {
+        "url": "https://tether.to/"
+      },
+      "decimals": 6,
+      "address": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+    },
+    "amount": 0,
+    "address": {
+      "address": "GRHMChwW1UuWEwv2vJajnsJHkRCMBV4junjd7E4dbuCZ"
+    },
+    "decimals": 6,
+    "price": 1.000554
+  },
+  {
+    "mint": {
+      "address": "7LuARTgaroSAnbV4ktHMKeGU6AXbExk67SFVQYGSpump"
+    },
+    "amount": 0,
+    "address": {
+      "address": "4j6coedbGQnGFFuc8cBe5pYFpinrmWm4acwEUFU17duZ"
+    },
+    "decimals": 6,
+    "price": 0
+  },
+  {
+    "mint": {
+      "address": "4ov9iWBQJy2qGezAG9ZEDPgjXYfsnkTN2AGBkmbYpump"
+    },
+    "amount": 0,
+    "address": {
+      "address": "5tfkC83D5RNoF5QZekdFctRiJv6ro1VDAdeYdtFGk9CY"
+    },
+    "decimals": 6,
+    "price": 0
+  },
+  {
+    "mint": {
+      "name": "USDC",
+      "ticker": "USDC",
+      "cmcId": "3408",
+      "logo": "https://raw.githubusercontent.com/trustwallet/assets/f3ffd0b9ae2165336279ce2f8db1981a55ce30f8/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+      "meta": {
+        "url": "https://www.centre.io/usdc"
+      },
+      "decimals": 6,
+      "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    },
+    "amount": 2202,
+    "address": {
+      "address": "5zikxC14TrU9hjniQ6x6scbZLx7y1M8WNa6LoNDt25Ww"
+    },
+    "decimals": 6,
+    "price": 0.999838
+  },
+  {
+    "mint": {
+      "address": "vjTJVR4ZWpnVFYAdFAmQT1yQmVvWdkSoAikTRkvNhat"
+    },
+    "amount": 0,
+    "address": {
+      "address": "E9GEgV6WxqsTTguHRELxeHsyh9Tr7HJQfzYz81PkvTEy"
+    },
+    "decimals": 6,
+    "price": 0
+  },
+  {
+    "mint": {
+      "address": "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv"
+    },
+    "amount": 0,
+    "address": {
+      "address": "FWTqRfktV5zUfkTsZb3PCvXFnw9AZyV8G4mnmVmt7Sth"
+    },
+    "decimals": 6,
+    "price": 0
+  }
+]
