@@ -13,8 +13,6 @@ import textwrap
 import time
 from datetime import datetime
 
-COINGECKO_API_URL = "https://api.coingecko.com/api/v3"
-
 
 async def main():
     # token_address = input("Enter Solana token address: ").strip()
@@ -70,6 +68,7 @@ async def main():
     message = textwrap.dedent(
         f"""
         💊 {name} • ${symbol}
+        {token_address}
         
         🕒 Age: {age}
         💰 MC: ${mcap}
@@ -111,7 +110,6 @@ def get_boosts(value) -> str:
 
 def get_socials(data) -> str:
     value = data["info"]
-    print(value["socials"])
     if "socials" not in value or not value["socials"]:
         print("No socials")
         return ""
