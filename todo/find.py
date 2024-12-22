@@ -21,10 +21,22 @@ def query_lp_mint_info(address: str):
     }
     """
     variables = {"where": {"pubkey": {"_eq": address}}}
-    response = requests.post(
-        GQL_ENDPOINT, json={"query": query, "variables": variables}
-    )
-    return response.json()
+    try:
+        response = requests.post(
+            GQL_ENDPOINT, json={"query": query, "variables": variables}, timeout=10
+        )
+        response.raise_for_status()  # Raises HTTPError for bad responses
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.Timeout:
+        print("The request timed out")
+    except requests.exceptions.RequestException as err:
+        print(f"Request exception: {err}")
+    except json.JSONDecodeError:
+        print("Failed to decode JSON. Response content:")
+        print(response.text)
+    return None
 
 
 def get_burn_percentage(lp_reserve, actual_supply):
@@ -59,9 +71,13 @@ def start(address):
     actual_supply = float(supply_raw) / (10**decimals)
 
     # print(f"lpMint: {lp_mint}")
+    burn_pct = get_burn_percentage(lp_reserve, actual_supply)
+
+    if int(burn_pct) < 90:
+        return
+
     print("-----------------")
     print(f"Reserve: {lp_reserve}")
     print(f"Actual Supply: {actual_supply}")
 
-    burn_pct = get_burn_percentage(lp_reserve, actual_supply)
     print(f"{burn_pct} LP burned")
