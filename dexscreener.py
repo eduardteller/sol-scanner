@@ -91,31 +91,29 @@ def dexscreener_routine(address: str, client: Client) -> str:
     else:
         price_change = f"{price_change}% 🔼"
 
-    message = textwrap.dedent(
-        f"""
-        🐦‍⬛  {name} • ${symbol}
-        {address}
-        
-        {authority}
-        
-        🕒  Age: {age}
-        💰  MC: ${mcap}
-        💧  Liq: ${liq}(...)
-        💲  Price: ${price}
+    message = f"""
+    🐦‍⬛  {name} • ${symbol}
+    {address}
 
-        📈  Vol: 1h: ${vol} | 1d: ...
-        📈  Price: 1h: {price_change} | 1d ...
+    {authority}
 
-        🦅  Dex ({url}): Paid✅ {boosts}
-        ⚡️  Scans: ... | 🔗 {links}
-        👥  Hodls (https://solscan.io/token/{address}#holders): {holders}
-        
-        🔫 Snipers: ...🚨
-        🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
-        {wallets_string}
-        
-        📊 Chart  DEX (https://dexscreener.com/solana/{address}) | Phtn (https://photon-sol.tinyastro.io/en/lp/{address}) | Brdeye (https://www.birdeye.so/token/{address}?chain=solana)
-        """
-    )
+    🕒  Age: {age}
+    💰  MC: ${mcap}
+    💧  Liq: ${liq}(...)
+    💲  Price: ${price}
+
+    📈  Vol: 1h: ${vol} | 1d: ...
+    📈  Price: 1h: {price_change} | 1d ...
+
+    🦅  [Dex]({url}): Paid✅ {boosts}
+    ⚡️  Scans: ... | 🔗 {links}
+    👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
+
+    🔫 Snipers: ...🚨
+    🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
+    {wallets_string}
+
+    📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+    """
 
     return message

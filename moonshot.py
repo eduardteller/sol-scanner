@@ -52,13 +52,13 @@ def moonshot_routine(address: str, client: Client) -> str:
         📈  Price: 1h: {price_change} | 1d ...
 
         ⚡️  Scans: ... | 🔗 {links}
-        👥  Hodls (https://solscan.io/token/{address}#holders): {holders}
+        👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
         
         🔫 Snipers: ...
         🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
         {wallets_string}
         
-        📊 Chart  DEX (https://dexscreener.com/solana/{address}) | Phtn (https://photon-sol.tinyastro.io/en/lp/{address}) | Brdeye (https://www.birdeye.so/token/{address}?chain=solana)
+        📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
         """
     )
 
