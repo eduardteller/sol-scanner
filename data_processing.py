@@ -3,21 +3,21 @@ from datetime import datetime
 
 
 def adjust_to_ten_digits(number: float) -> float:
-    # Convert number to string to count digits
-    num_str = str(number).replace(".", "").replace("-", "")
-    num_digits = len(num_str)
+    # Extract the integer part without sign
+    integer_part = str(abs(int(number)))
+    num_digits = len(integer_part)
 
-    # Adjust the number to have exactly 10 digits
+    # Adjust the integer part to have exactly 10 digits
     if num_digits < 10:
         while num_digits < 10:
             number *= 10
-            num_str = str(number).replace(".", "").replace("-", "")
-            num_digits = len(num_str)
+            integer_part = str(abs(int(number)))
+            num_digits = len(integer_part)
     elif num_digits > 10:
         while num_digits > 10:
             number /= 10
-            num_str = str(number).replace(".", "").replace("-", "")
-            num_digits = len(num_str)
+            integer_part = str(abs(int(number)))
+            num_digits = len(integer_part)
 
     return number
 
@@ -41,8 +41,14 @@ def format_time(pair_time: int | float) -> str:
     minutes = (total_seconds % 3600) // 60
     seconds = total_seconds % 60
 
-    # Format the output
-    if days > 0:
+    # Check for years and months first
+    if days >= 365:
+        years = days // 365
+        formatted_time_diff = f"{years}Y"
+    elif days >= 30:
+        months = days // 30
+        formatted_time_diff = f"{months}Mo"
+    elif days > 0:
         formatted_time_diff = f"{days}D"
     elif hours > 0:
         formatted_time_diff = f"{hours}H"
@@ -54,7 +60,7 @@ def format_time(pair_time: int | float) -> str:
     return formatted_time_diff
 
 
-def format_values(value) -> str:
+def format_values(value: float | int) -> str:
     if value > 1_000_000_000:
         return f"{value / 1_000_000_000:.2f}B"
     elif value > 1_000_000:

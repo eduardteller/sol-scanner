@@ -20,6 +20,8 @@ def pumpfun_routine(address: str, client: Client) -> str:
 
     info = data["result"]["token_info"]
 
+    print(json.dumps(data, indent=4))
+
     name = data["result"]["content"]["metadata"]["name"]
     symbol = data["result"]["content"]["metadata"]["symbol"]
     price = float(info["price_info"]["price_per_token"])
@@ -35,8 +37,21 @@ def pumpfun_routine(address: str, client: Client) -> str:
     wallets_string = get_20_wallets(wallets["wallets"])
     price = format(price, "f")
 
-    message = textwrap.dedent(
-        f"""💊  {name} • ${symbol}\n`{address}`\n\n🕒  Age: {age}\n💰  MC: ${mcap}\n💲  Price: ${price}\n\n⚡️  Scans: ... | 🔗 ...\n👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}\n\n🎯  Top 20 wallets hold: {math.floor(wallets["percent"])}%\n{wallets_string}\n\n📊 Chart  [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)"""
-    )
+    message = f"""\
+        💊  **{name}** • **${symbol}**
+        `{address}`
+
+        🕒  Age: {age}
+        💰  MC: ${mcap}
+        💲  Price: ${price}
+
+        ⚡️  Scans: ... | 🔗 ...
+        👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
+
+        🎯  Top 20 wallets hold: {math.floor(wallets["percent"])}%
+        {wallets_string}
+
+        📊 Chart  [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+    """
 
     return message

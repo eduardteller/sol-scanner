@@ -1,6 +1,6 @@
 import requests
 import json
-from todo.find import start
+from find import start
 import time
 
 ENDPOINT = "https://programs.shyft.to/v0/graphql/?api_key=WXLnaB1VZbEZMfic&network=mainnet-beta"
@@ -98,4 +98,4 @@ def query_lp_by_token(token):
 
 
 if __name__ == "__main__":
-    query_lp_by_token("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263")
+    query_lp_by_token("9Fed9JHd4Wq1M75F7TiLHfmHa6Mimcfxa4m2jqbAjV94")
