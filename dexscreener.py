@@ -40,12 +40,12 @@ def get_socials(data) -> str:
     string_of_socials = ""
     for social in value["socials"]:
         if social["type"] == "twitter":
-            string_of_socials = f"TW ({social['url']})"
+            string_of_socials = f"[TW]({social['url']})"
         elif social["type"] == "telegram":
-            string_of_socials += f" | TG ({social['url']})"
+            string_of_socials += f" | [TG]({social['url']})"
 
     if value["websites"][0]:
-        string_of_socials += f" | WEB ({value['websites'][0]['url']})"
+        string_of_socials += f" | [WEB]({value['websites'][0]['url']})"
 
     return string_of_socials
 
@@ -91,7 +91,8 @@ def dexscreener_routine(address: str, client: Client) -> str:
     else:
         price_change = f"{price_change}% 🔼"
 
-    message = f"""
+    message = textwrap.dedent(
+        f"""
     🐦‍⬛  {name} • ${symbol}
     {address}
 
@@ -115,5 +116,6 @@ def dexscreener_routine(address: str, client: Client) -> str:
 
     📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
     """
+    )
 
     return message
