@@ -94,7 +94,7 @@ def dexscreener_routine(address: str, client: Client) -> str:
     message = textwrap.dedent(
         f"""
     🐦‍⬛  {name} • ${symbol}
-    {address}
+    `{address}`
 
     {authority}
 

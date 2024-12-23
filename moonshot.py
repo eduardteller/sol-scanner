@@ -42,7 +42,7 @@ def moonshot_routine(address: str, client: Client) -> str:
     message = textwrap.dedent(
         f"""
     🌕  {name} • ${symbol}
-    {address}
+    `{address}`
     
     🕒  Age: {age}
     💰  MC: ${mcap}
