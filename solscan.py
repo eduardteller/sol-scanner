@@ -4,22 +4,23 @@ from datetime import datetime
 from solana.rpc.api import Client
 from largest_accounts import get_largest_wallets
 from solders.pubkey import Pubkey
-
-solana_client = Client(
-    "https://warmhearted-cold-liquid.solana-mainnet.quiknode.pro/d66b4f59ba20fb9f1099e45b5f32f2d9a675caea/"
-)
-
+from data_processing import format_time, format_values
+from my_types import SolscanData
 
 ONE_DAY = 86400
-
-from data_processing import format_time, format_values
 
 solscan_headers = {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5NzIxODg2MDgsImVtYWlsIjoiZWR1YXJkdGVsbGVyMUBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5NzIxODh9.IFTQ4byOepGx1DalTcaNoVsB38faQ0hHHTVwJ3EH2iM"
 }
-address = "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
 
-pubkey = Pubkey.from_string(address)
+solscan_account_data_url = "https://pro-api.solscan.io/v2.0/account/detail"
+solscan_account_balance_change_url = (
+    "https://pro-api.solscan.io/v2.0/account/balance_change"
+)
+
+solscan_price_url = "https://pro-api.solscan.io/v2.0/token/price"
+solscan_meta_url = "https://pro-api.solscan.io/v2.0/token/meta"
+birdeye_price_history_url = "https://public-api.birdeye.so/defi/history_price"
 
 
 def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
@@ -28,7 +29,7 @@ def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
 
     solscan_filter = f"time[]={token_creation}&time[]={current_date}"
 
-    solscan_url = f"https://pro-api.solscan.io/v2.0/token/price?address={address}&{solscan_filter}"
+    solscan_url = f"{solscan_price_url}?address={address}&{solscan_filter}"
 
     solscan_price_history = requests.get(solscan_url, headers=solscan_headers)
 
@@ -51,7 +52,7 @@ def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
     after = unix_timestamp - (ONE_DAY * 2)
     before = unix_timestamp + (ONE_DAY * 2)
 
-    birdeye_url = f"https://public-api.birdeye.so/defi/history_price?address=9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump&address_type=token&type=15m&time_from={after}&time_to={before}"
+    birdeye_url = f"{birdeye_price_history_url}?address=9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump&address_type=token&type=15m&time_from={after}&time_to={before}"
 
     birdeye_headers = {
         "accept": "application/json",
@@ -65,68 +66,99 @@ def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
 
     max_price2 = max(item["value"] for item in birdeye_price_data["data"]["items"])
 
-    return math.ceil(float(max_price2) * supply)
+    return math.floor(float(max_price2) * supply)
 
 
-url = f"https://pro-api.solscan.io/v2.0/token/meta?address={address}"
+def solana_price() -> float:
+    sol_price_url = (
+        f"{solscan_price_url}?address=So11111111111111111111111111111111111111112"
+    )
 
-url2 = "https://pro-api.solscan.io/v2.0/token/price?address=So11111111111111111111111111111111111111112"
+    sol_price_resp = requests.get(sol_price_url, headers=solscan_headers)
 
-response = requests.get(url2, headers=solscan_headers)
+    sol_price_resp_json = sol_price_resp.json()
 
-sol_price_response = response.json()
+    sol_price = float(sol_price_resp_json["data"][0]["price"])
 
-sol_price = float(sol_price_response["data"][0]["price"])
+    return sol_price
 
-meta = requests.get(url, headers=solscan_headers).json()
 
-if not meta["success"] or not meta["data"]:
-    print("Failed to fetch metadata")
-    exit()
+def dev_balance(account: str) -> int:
+    get_balance_url = f"{solscan_account_data_url}?address={account}"
 
-name = meta["data"]["name"]
-symbol: str = meta["data"]["symbol"]
-image_url = meta["data"]["icon"]
+    get_balance_resp = requests.get(get_balance_url, headers=solscan_headers)
 
-mint = meta["data"]["mint_authority"]
-freeze = meta["data"]["freeze_authority"]
+    get_balance_resp_json = get_balance_resp.json()
 
-age = format_time(int(meta["data"]["created_time"]))
+    balance = int(int(get_balance_resp_json["data"]["lamports"]) / 1000000000)
 
-decimals = int(meta["data"]["decimals"])
-supply: int = math.floor(int(meta["data"]["supply"]) / (10**decimals))
+    return balance
 
-price = float(meta["data"]["price"])
-mcap = meta["data"]["market_cap"]
-holders = meta["data"]["holder"]
 
-ath = get_ath(int(meta["data"]["created_time"]), address, supply)
+def dev_balance_change(account: str, address: str) -> int:
+    get_balance_change_url = f"{solscan_account_balance_change_url}?address={account}&token={address}&page_size=10&page=1&remove_spam=true&flow=in&sort_by=block_time&sort_order=asc"
 
-wallets = get_largest_wallets(solana_client, pubkey, supply)
+    get_balance_change_resp = requests.get(
+        get_balance_change_url, headers=solscan_headers
+    )
 
-# print(json.dumps(meta, indent=2))
-return_message = f"""\
-💠  {name} • ${(symbol.upper())}
-{address}
-➕  Mint: {"No 🤍" if not mint else "Yes 🚨"} | 🧊 Freeze: {"No 🤍" if not freeze else "Yes 🚨"}
+    get_balance_change_resp_json = get_balance_change_resp.json()
 
-🕒  Age: {age} 
-💵  Price: ${price}
-💰  MC: ${format_values(mcap)}
-💧  Liq: $14.9M (40418 SOL)
+    buy_order: int = int(get_balance_change_resp_json["data"][0]["amount"]) / int(
+        get_balance_change_resp_json["data"][0]["token_decimals"]
+    )
 
-🕊️  ATH: ${format_values(ath)} ({(ath / mcap):.2f}X)
-📈  Vol: 1h: $9.8M  | 1d: $64.2M
-📈  Price: 1h: 18%🔼 | 1d: 1%🔼
+    return buy_order
 
-🦅  DexS: Paid✅ | Boosts:  
-⚡️  Scans: ... | 🔗 ...
-👥  Hodls: {holders} | Top: {wallets["percent"]}%
 
-🎯  First 20: 0 Fresh
+def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> SolscanData:
+    token_meta_url = f"{solscan_meta_url}?address={address}"
 
-🛠️ Dev : 0 SOL | 0% $FARTCOIN
-┗ Sniped: 6.7% 🤍
-"""
+    solscan_token_meta_resp = requests.get(
+        token_meta_url, headers=solscan_headers
+    ).json()
 
-# print(return_message)
+    if not solscan_token_meta_resp["success"] or not solscan_token_meta_resp["data"]:
+        print("Failed to fetch metadata")
+        exit()
+
+    token_name = solscan_token_meta_resp["data"]["name"]
+    token_symbol: str = solscan_token_meta_resp["data"]["symbol"]
+    token_icon_url = solscan_token_meta_resp["data"]["icon"]
+
+    token_mint_auth = solscan_token_meta_resp["data"]["mint_authority"]
+    token_freeze_auth = solscan_token_meta_resp["data"]["freeze_authority"]
+
+    token_age = format_time(int(solscan_token_meta_resp["data"]["created_time"]))
+
+    token_supply_decimals = int(solscan_token_meta_resp["data"]["decimals"])
+    token_supply: int = math.floor(
+        int(solscan_token_meta_resp["data"]["supply"]) / (10**token_supply_decimals)
+    )
+
+    tokern_price = float(solscan_token_meta_resp["data"]["price"])
+    token_mcap: int = solscan_token_meta_resp["data"]["market_cap"]
+    token_holders: int = solscan_token_meta_resp["data"]["holder"]
+
+    token_ath: int = get_ath(
+        int(solscan_token_meta_resp["data"]["created_time"]), address, token_supply
+    )
+
+    token_top20_wallets = get_largest_wallets(solana_client, pubkey, token_supply)
+
+    return_object: SolscanData = SolscanData(
+        token_name=token_name,
+        token_symbol=token_symbol,
+        token_icon_url=token_icon_url,
+        token_mint_auth=token_mint_auth,
+        token_freeze_auth=token_freeze_auth,
+        token_price=tokern_price,
+        token_supply=token_supply,
+        token_mcap=token_mcap,
+        token_age=token_age,
+        token_holders=token_holders,
+        token_ath=token_ath,
+        token_top20_wallets=token_top20_wallets,
+    )
+
+    return return_object

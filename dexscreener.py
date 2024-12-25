@@ -1,14 +1,13 @@
 import requests
-import textwrap
 from solana.rpc.api import Client
 from solders.pubkey import Pubkey
 from data_processing import format_values, format_time
 from get_mint_and_freeze import get_mint_and_freeze_authority
 from holders import get_holders
 from largest_accounts import get_largest_wallets
-import json
+from my_types import SolscanData
+from solscan import solscan_start, solana_price
 import math
-
 from typing import List
 
 
@@ -65,57 +64,91 @@ def dexscreener_routine(address: str, client: Client) -> str:
     if "moonshot" in data["pairs"][0]:
         return "moonshot"
 
+    sol_data: SolscanData = solscan_start(client, address, pub)
+    sol_price: float = solana_price()
+
     pair = data["pairs"][0]
+
     name = pair["baseToken"]["name"]
-    symbol = pair["baseToken"]["symbol"]
-    url = pair["url"]
+    symbol: str = pair["baseToken"]["symbol"]
     price = pair["priceUsd"]
-    mcap = format_values(pair["marketCap"])
-    age = format_time(pair["pairCreatedAt"])
+    # mcap_raw = pair["marketCap"]
+    # mcap = format_values(pair["marketCap"])
+    liq_raw = pair["liquidity"]["usd"]
     liq = format_values(pair["liquidity"]["usd"])
-    price_change = pair["priceChange"]["h1"]
-    vol = format_values(pair["volume"]["h1"])
+    price_change_h = pair["priceChange"]["h1"]
+    vol_h = format_values(pair["volume"]["h1"])
+    price_change_d = pair["priceChange"]["h24"]
+    vol_d = format_values(pair["volume"]["h24"])
     boosts = get_boosts(pair)
     links = get_socials(pair)
+    # age = format_time(pair["pairCreatedAt"])
 
-    authority = get_mint_and_freeze_authority(client, pub)
+    wallets_string = get_20_wallets(sol_data.token_top20_wallets.wallets)
 
-    holders = get_holders(client, address)
-
-    wallets = get_largest_wallets(client, pub)
-
-    wallets_string = get_20_wallets(wallets["wallets"])
-
-    if pair["priceChange"]["h1"] < 0:
-        price_change = f"{price_change}% 🔻"
+    if price_change_h < 0:
+        price_change_h = f"{price_change_h}% 🔻"
     else:
-        price_change = f"{price_change}% 🔼"
+        price_change_h = f"{price_change_h}% 🔼"
 
-    message = textwrap.dedent(
-        f"""
-    🐦‍⬛  {name} • ${symbol}
+    if price_change_d < 0:
+        price_change_d = f"{price_change_d}% 🔻"
+    else:
+        price_change_d = f"{price_change_d}% 🔼"
+
+    # message = textwrap.dedent(
+    #     f"""
+    # 🐦‍⬛  {name} • ${symbol}
+    # `{address}`
+
+    # {authority}
+
+    # 🕒  Age: {age}
+    # 💰  MC: ${mcap}
+    # 💧  Liq: ${liq}(...)
+    # 💲  Price: ${price}
+
+    # 📈  Vol: 1h: ${vol} | 1d: ...
+    # 📈  Price: 1h: {price_change} | 1d ...
+
+    # 🦅  [Dex]({url}): Paid✅ {boosts}
+    # ⚡️  Scans: ... | 🔗 {links}
+    # 👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
+
+    # 🔫 Snipers: ...🚨
+    # 🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
+    # {wallets_string}
+
+    # 📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+    # """
+    # )
+
+    message2 = f"""\
+    💠  {name} • ${(symbol.upper())}
     `{address}`
+    
+    ➕  Mint: {"No 🤍" if not sol_data.token_mint_auth else "Yes 🚨"} | 🧊 Freeze: {"No 🤍" if not sol_data.token_freeze_auth else "Yes 🚨"}
 
-    {authority}
+    🕒  Age: {sol_data.token_age} 
+    💵  Price: ${price}
+    💰  MC: ${format_values(sol_data.token_mcap)}
+    💧  Liq: ${liq} ({math.floor(liq_raw / sol_price)} SOL)
 
-    🕒  Age: {age}
-    💰  MC: ${mcap}
-    💧  Liq: ${liq}(...)
-    💲  Price: ${price}
+    🕊️  ATH: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
+    📈  Vol: 1h: ${vol_h} | 1d: ${vol_d}
+    📈  Price: 1h: {price_change_h} | 1d: {price_change_d}
 
-    📈  Vol: 1h: ${vol} | 1d: ...
-    📈  Price: 1h: {price_change} | 1d ...
-
-    🦅  [Dex]({url}): Paid✅ {boosts}
+    🦅  DexS: Paid✅ {f"{boosts}" if boosts else ""}
     ⚡️  Scans: ... | 🔗 {links}
-    👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
+    👥  Hodls: {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
 
-    🔫 Snipers: ...🚨
-    🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
+    🎯  First 20: ... Fresh
     {wallets_string}
 
+    🛠️ Dev : ... SOL | ...% $FARTCOIN
+    ┗ Sniped: ...% 🤍
+    
     📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
     """
-    )
 
-    return message
+    return message2

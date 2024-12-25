@@ -19,5 +19,9 @@ def main(address: str) -> str:
         response = moonshot_routine(token_address, solana_client)
 
     # print(textwrap.dedent(response))
+    print((response))
 
-    return textwrap.dedent(response)
+    # return textwrap.dedent(response)
+
+
+main("9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump")

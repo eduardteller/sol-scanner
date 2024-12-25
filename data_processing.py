@@ -44,18 +44,18 @@ def format_time(pair_time: int | float) -> str:
     # Check for years and months first
     if days >= 365:
         years = days // 365
-        formatted_time_diff = f"{years}Y"
+        formatted_time_diff = f"{years}y"
     elif days >= 30:
         months = days // 30
-        formatted_time_diff = f"{months}Mo"
+        formatted_time_diff += f"{months}mo"
     elif days > 0:
-        formatted_time_diff = f"{days}D"
+        formatted_time_diff = f"{days}d"
     elif hours > 0:
-        formatted_time_diff = f"{hours}H"
+        formatted_time_diff = f"{hours}h"
     elif minutes > 0:
-        formatted_time_diff = f"{minutes}M"
+        formatted_time_diff = f"{minutes}m"
     else:
-        formatted_time_diff = f"{seconds}S"
+        formatted_time_diff = f"{seconds}s"
 
     return formatted_time_diff
 
