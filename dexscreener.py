@@ -15,6 +15,7 @@ from solscan import (
 )
 import math
 from typing import List
+from rug import check_rug
 
 
 def get_20_wallets(wallets: List[str]) -> str:
@@ -87,8 +88,6 @@ def dexscreener_routine(address: str, client: Client) -> str:
             dev_holding_amoutn / sol_data.token_supply * 100
         )
 
-    print(dev_holding_amoutn)
-
     pair = data["pairs"][0]
 
     name = pair["baseToken"]["name"]
@@ -106,6 +105,8 @@ def dexscreener_routine(address: str, client: Client) -> str:
     links = get_socials(pair)
     # age = format_time(pair["pairCreatedAt"])
 
+    rug = check_rug(address)
+
     wallets_string = get_20_wallets(sol_data.token_top20_wallets.wallets)
 
     if price_change_h < 0:
@@ -118,56 +119,34 @@ def dexscreener_routine(address: str, client: Client) -> str:
     else:
         price_change_d = f"{price_change_d}% 🔼"
 
-    # message = textwrap.dedent(
-    #     f"""
-    # 🐦‍⬛  {name} • ${symbol}
-    # `{address}`
-
-    # {authority}
-
-    # 🕒  Age: {age}
-    # 💰  MC: ${mcap}
-    # 💧  Liq: ${liq}(...)
-    # 💲  Price: ${price}
-
-    # 📈  Vol: 1h: ${vol} | 1d: ...
-    # 📈  Price: 1h: {price_change} | 1d ...
-
-    # 🦅  [Dex]({url}): Paid✅ {boosts}
-    # ⚡️  Scans: ... | 🔗 {links}
-    # 👥  [Hodls](https://solscan.io/token/{address}#holders): {holders}
-
-    # 🔫 Snipers: ...🚨
-    # 🎯 Top 20 wallets hold: {math.floor(wallets["percent"])}%
-    # {wallets_string}
-
-    # 📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
-    # """
-    # )
-
     message2 = f"""\
-    💠  {name} • ${(symbol.upper())}
+    💠  **{name}** • **${(symbol.upper())}**
     `{address}`
     
-    ➕  Mint: {"No 🤍" if not sol_data.token_mint_auth else "Yes 🚨"} | 🧊 Freeze: {"No 🤍" if not sol_data.token_freeze_auth else "Yes 🚨"}
+    ➕  **Mint**: {"No ✅" if not sol_data.token_mint_auth else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not sol_data.token_freeze_auth else "Yes 🚨"}
 
-    🕒  Age: {sol_data.token_age} 
-    💵  Price: ${price}
-    💰  MC: ${format_values(sol_data.token_mcap)}
-    💧  Liq: ${liq} ({math.floor(liq_raw / sol_price)} SOL)
+    📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug["score"]} ✅
 
-    🕊️  ATH: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
-    📈  Vol: 1h: ${vol_h} | 1d: ${vol_d}
-    📈  Price: 1h: {price_change_h} | 1d: {price_change_d}
+    🕒  **Age**: {sol_data.token_age} 
+    💵  **Price**: ${price}
+    💰  **MC**: ${format_values(sol_data.token_mcap)}
+    💧  **Liq**: ${liq} ({math.floor(liq_raw / sol_price)} SOL)
 
-    🦅  DexS: Paid✅ {f"{boosts}" if boosts else ""}
+    🕊️  **ATH**: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
+    📈  **Vol**: 1h: ${vol_h} | 1d: ${vol_d}
+    📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
+
+    🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ✅ {f"{boosts}" if boosts else ""}
     🔗  {links}
-    👥  Hodls: {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
+    👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
 
-    🛠️ Dev : {dev_balance_sol} SOL | {dev_holding_amoutn}% ${(symbol.upper())}
+    🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amoutn}% ${(symbol.upper())}
     ┗ Sniped: {dev_snipe_percent}%
     
-    📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+    📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
     """
 
-    return message2
+    return {
+        "message": message2,
+        "image": sol_data.token_icon_url,
+    }

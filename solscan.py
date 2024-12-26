@@ -90,6 +90,9 @@ def dev_balance(account: str) -> str:
 
     get_balance_resp_json = get_balance_resp.json()
 
+    if "lamports" not in get_balance_resp_json["data"]:
+        return "0"
+
     balance = f"{(int(get_balance_resp_json['data']['lamports']) / 1000000000):.2f}"
 
     return balance

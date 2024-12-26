@@ -20,9 +20,7 @@ def main(address: str) -> str:
     elif response == "moonshot":
         response = moonshot_routine(token_address, solana_client)
 
-    print(textwrap.dedent(response))
-
-    # return textwrap.dedent(response)
-
-
-main("9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump")
+    return {
+        "text": textwrap.dedent(response["message"]),
+        "icon": response["image"],
+    }

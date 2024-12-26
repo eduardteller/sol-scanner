@@ -72,17 +72,11 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if return_string:  # Check if the result contains
         await context.bot.send_photo(
-            photo="https://cdn.helius-rpc.com/cdn-cgi/image//https://ipfs.io/ipfs/QmXKZqw6yomJzFus7ErWqzfySBn73nDNaMRn7U1KBuP55w",
+            photo=return_string["icon"],
             chat_id=update.effective_chat.id,
-            caption=return_string,
+            caption=return_string["text"],
             parse_mode="Markdown",
         )
-        # await context.bot.send_message(
-        #     text=return_string,
-        #     parse_mode="Markdown",
-        #     disable_web_page_preview=True,
-        #     chat_id=update.effective_chat.id,
-        # )
     else:
         await update.message.reply_text("Invalid CA")
 
