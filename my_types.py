@@ -12,6 +12,7 @@ class Wallets:
 class SolscanData:
     token_name: str
     token_symbol: str
+    token_creator: str
     token_icon_url: str
     token_mint_auth: Any
     token_freeze_auth: Any

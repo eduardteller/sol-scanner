@@ -83,20 +83,20 @@ def solana_price() -> float:
     return sol_price
 
 
-def dev_balance(account: str) -> int:
+def dev_balance(account: str) -> str:
     get_balance_url = f"{solscan_account_data_url}?address={account}"
 
     get_balance_resp = requests.get(get_balance_url, headers=solscan_headers)
 
     get_balance_resp_json = get_balance_resp.json()
 
-    balance = int(int(get_balance_resp_json["data"]["lamports"]) / 1000000000)
+    balance = f"{(int(get_balance_resp_json['data']['lamports']) / 1000000000):.2f}"
 
     return balance
 
 
 def dev_balance_change(account: str, address: str) -> int:
-    get_balance_change_url = f"{solscan_account_balance_change_url}?address={account}&token={address}&page_size=10&page=1&remove_spam=true&flow=in&sort_by=block_time&sort_order=asc"
+    get_balance_change_url = f"{solscan_account_balance_change_url}?address={account}&token={address}&page_size=10&page=1&remove_spam=true&flow=in&sort_by=block_time&sort_order=desc"
 
     get_balance_change_resp = requests.get(
         get_balance_change_url, headers=solscan_headers
@@ -104,11 +104,37 @@ def dev_balance_change(account: str, address: str) -> int:
 
     get_balance_change_resp_json = get_balance_change_resp.json()
 
-    buy_order: int = int(get_balance_change_resp_json["data"][0]["amount"]) / int(
-        get_balance_change_resp_json["data"][0]["token_decimals"]
+    if not get_balance_change_resp_json["data"]:
+        return 0
+
+    element = min(
+        get_balance_change_resp_json["data"], key=lambda item: item["block_time"]
+    )
+
+    buy_order = math.floor(
+        int(element["amount"]) / (10 ** int(element["token_decimals"]))
     )
 
     return buy_order
+
+
+def dev_holding_sauce(account: str, address: str) -> int:
+    url = f"https://pro-api.solscan.io/v2.0/account/token-accounts?address={account}&type=token&page=1&page_size=30&hide_zero=true"
+
+    resp = requests.get(url, headers=solscan_headers)
+
+    data = resp.json()
+
+    token_balance = 0
+
+    for item in data["data"]:
+        if item["token_address"] == address:
+            token_balance = math.floor(
+                int(item["amount"]) / (10 ** int(item["token_decimals"]))
+            )
+            break
+
+    return token_balance
 
 
 def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> SolscanData:
@@ -140,6 +166,8 @@ def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> Solsca
     token_mcap: int = solscan_token_meta_resp["data"]["market_cap"]
     token_holders: int = solscan_token_meta_resp["data"]["holder"]
 
+    token_creator: str = solscan_token_meta_resp["data"]["creator"]
+
     token_ath: int = get_ath(
         int(solscan_token_meta_resp["data"]["created_time"]), address, token_supply
     )
@@ -149,6 +177,7 @@ def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> Solsca
     return_object: SolscanData = SolscanData(
         token_name=token_name,
         token_symbol=token_symbol,
+        token_creator=token_creator,
         token_icon_url=token_icon_url,
         token_mint_auth=token_mint_auth,
         token_freeze_auth=token_freeze_auth,

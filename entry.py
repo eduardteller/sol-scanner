@@ -8,6 +8,8 @@ solana_client = Client(
     "https://warmhearted-cold-liquid.solana-mainnet.quiknode.pro/d66b4f59ba20fb9f1099e45b5f32f2d9a675caea/"
 )
 
+pump_fun_program_pubkey = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+
 
 def main(address: str) -> str:
     token_address = address
@@ -18,8 +20,7 @@ def main(address: str) -> str:
     elif response == "moonshot":
         response = moonshot_routine(token_address, solana_client)
 
-    # print(textwrap.dedent(response))
-    print((response))
+    print(textwrap.dedent(response))
 
     # return textwrap.dedent(response)
 

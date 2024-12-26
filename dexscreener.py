@@ -6,7 +6,13 @@ from get_mint_and_freeze import get_mint_and_freeze_authority
 from holders import get_holders
 from largest_accounts import get_largest_wallets
 from my_types import SolscanData
-from solscan import solscan_start, solana_price
+from solscan import (
+    solscan_start,
+    solana_price,
+    dev_balance,
+    dev_balance_change,
+    dev_holding_sauce,
+)
 import math
 from typing import List
 
@@ -66,6 +72,22 @@ def dexscreener_routine(address: str, client: Client) -> str:
 
     sol_data: SolscanData = solscan_start(client, address, pub)
     sol_price: float = solana_price()
+
+    dev_balance_sol = dev_balance(sol_data.token_creator)
+    dev_balance_change_var = dev_balance_change(
+        sol_data.token_creator,
+        address,
+    )
+    # dev_snipe_percent = f"{(dev_balance_change_var / sol_data.token_supply):.2f}"
+    dev_snipe_percent = f"{(dev_balance_change_var / sol_data.token_supply * 100):.2f}"
+    dev_holding_amoutn = dev_holding_sauce(sol_data.token_creator, address)
+
+    if dev_holding_amoutn:
+        dev_holding_amoutn = math.floor(
+            dev_holding_amoutn / sol_data.token_supply * 100
+        )
+
+    print(dev_holding_amoutn)
 
     pair = data["pairs"][0]
 
@@ -139,14 +161,11 @@ def dexscreener_routine(address: str, client: Client) -> str:
     📈  Price: 1h: {price_change_h} | 1d: {price_change_d}
 
     🦅  DexS: Paid✅ {f"{boosts}" if boosts else ""}
-    ⚡️  Scans: ... | 🔗 {links}
+    🔗  {links}
     👥  Hodls: {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
 
-    🎯  First 20: ... Fresh
-    {wallets_string}
-
-    🛠️ Dev : ... SOL | ...% $FARTCOIN
-    ┗ Sniped: ...% 🤍
+    🛠️ Dev : {dev_balance_sol} SOL | {dev_holding_amoutn}% ${(symbol.upper())}
+    ┗ Sniped: {dev_snipe_percent}%
     
     📊 Chart  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
     """

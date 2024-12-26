@@ -47,7 +47,7 @@ def format_time(pair_time: int | float) -> str:
         formatted_time_diff = f"{years}y"
     elif days >= 30:
         months = days // 30
-        formatted_time_diff += f"{months}mo"
+        formatted_time_diff = f"{months}mo"
     elif days > 0:
         formatted_time_diff = f"{days}d"
     elif hours > 0:
