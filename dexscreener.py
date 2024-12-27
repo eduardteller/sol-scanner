@@ -90,11 +90,13 @@ def dexscreener_routine(address: str, client: Client) -> str:
 
     pair = data["pairs"][0]
 
+    # mcap_raw = pair["marketCap"]
+    # mcap = format_values(pair["marketCap"])
+    # age = format_time(pair["pairCreatedAt"])
+    
     name = pair["baseToken"]["name"]
     symbol: str = pair["baseToken"]["symbol"]
     price = pair["priceUsd"]
-    # mcap_raw = pair["marketCap"]
-    # mcap = format_values(pair["marketCap"])
     liq_raw = pair["liquidity"]["usd"]
     liq = format_values(pair["liquidity"]["usd"])
     price_change_h = pair["priceChange"]["h1"]
@@ -103,21 +105,17 @@ def dexscreener_routine(address: str, client: Client) -> str:
     vol_d = format_values(pair["volume"]["h24"])
     boosts = get_boosts(pair)
     links = get_socials(pair)
-    # age = format_time(pair["pairCreatedAt"])
 
     rug = check_rug(address)
 
     wallets_string = get_20_wallets(sol_data.token_top20_wallets.wallets)
 
-    if price_change_h < 0:
-        price_change_h = f"{price_change_h}% 🔻"
-    else:
-        price_change_h = f"{price_change_h}% 🔼"
+    price_change_h = f"{price_change_h}% 🔻" if price_change_h < 0 else f"{price_change_h}% 🔼"
+    price_change_d = f"{price_change_d}% 🔻" if price_change_d < 0 else f"{price_change_d}% 🔼"
 
-    if price_change_d < 0:
-        price_change_d = f"{price_change_d}% 🔻"
-    else:
-        price_change_d = f"{price_change_d}% 🔼"
+    rug_score = (
+        f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {"✅" if int(rug["score"]) < 400 else "🚨"}"
+    )
 
     message2 = f"""\
     💠  **{name}** • **${(symbol.upper())}**
@@ -125,7 +123,7 @@ def dexscreener_routine(address: str, client: Client) -> str:
     
     ➕  **Mint**: {"No ✅" if not sol_data.token_mint_auth else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not sol_data.token_freeze_auth else "Yes 🚨"}
 
-    📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug["score"]} ✅
+    {rug_score}
 
     🕒  **Age**: {sol_data.token_age} 
     💵  **Price**: ${price}
