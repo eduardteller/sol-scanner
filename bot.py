@@ -74,14 +74,14 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Invalid CA")
         return
 
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Gathering data, please wait 5-10 seconds...",
+    )
+
     return_string = await exec_main(address)
 
     if return_string:  # Check if the result contains
-
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="Gathering data, please wait 5-10 seconds...",
-        )
 
         await context.bot.send_photo(
             photo=return_string["icon"],
