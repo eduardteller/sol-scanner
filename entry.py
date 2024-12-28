@@ -104,7 +104,7 @@ async def dexscreener_routine(
             )
 
         # rug_score = f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {('✅' if int(rug['score']) < 400 else '🚨')}"
-
+        dexs = f"🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ✅"
         wallets_string = format_wallets(sol_data.token_top20_wallets.wallets)
 
         price_change_h = (
@@ -134,7 +134,7 @@ async def dexscreener_routine(
         📈  **Vol**: 1h: ${data.vol_h} | 1d: ${data.vol_d}
         📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
 
-        🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ✅ {f"{data.boosts}" if data.boosts else ""}
+        {f"{data.boosts}" if data.boosts else ""}
         🔗  {data.links}
         👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
 
