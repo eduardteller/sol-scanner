@@ -17,11 +17,11 @@ async def get_largest_wallets(
             combined += item.amount.ui_amount
 
         return_object: Wallets = Wallets(
-            wallets=wallets, percent=f"{(combined / supply) * 100:.2f}"
+            wallets=wallets, percent=float(f"{(combined / supply) * 100:.2f}")
         )
 
         return return_object
 
     except Exception as e:
         print(f"ERROR GET LARGEST WALLETS: {e}")
-        return Wallets(wallets=[], percent="0.00")
+        return Wallets(wallets=[], percent=0.0)

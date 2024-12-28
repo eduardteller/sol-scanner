@@ -32,15 +32,12 @@ async def exec_main(address: str) -> str:
         dex_response = await exec_dexscreener(address, session)
 
         if dex_response == "pumpfun":
-            return {
-                "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
-                "message": "pumpfun",
-            }
+            return await pumpfun_routine(address, solana_client, session, public_key)
 
         if dex_response == "moonshot":
             return {
                 "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
-                "message": "moonshot",
+                "text": "moonshot",
             }
 
         final = await dexscreener_routine(
@@ -56,6 +53,91 @@ async def exec_main(address: str) -> str:
     finally:
         await solana_client.close()
         await session.close()
+
+
+async def is_valid_image_url(session: ClientSession, url: str) -> bool:
+    try:
+        async with session.head(url, timeout=5) as response:
+            if response.status != 200:
+                return False
+
+            content_type = response.headers.get("Content-Type", "")
+            return content_type.startswith("image/")
+    except Exception as e:
+        return False
+
+
+async def pumpfun_routine(
+    address: str,
+    rpc_client: AsyncClient,
+    session: ClientSession,
+    public_key: str,
+) -> str:
+    try:
+        sol_data = await exec_solscan(rpc_client, address, public_key, session)
+
+        if not sol_data:
+            return {
+                "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
+                "text": textwrap.dedent("ERROR SOLCAN"),
+            }
+
+        sol_data: SolscanData = sol_data
+
+        dev_balance_sol, dev_balance_change_var, dev_holding_amount = (
+            await asyncio.gather(
+                get_dev_balance(sol_data.token_creator, session),
+                get_dev_balance_change(sol_data.token_creator, address, session),
+                get_dev_token_balance(sol_data.token_creator, address, session),
+            )
+        )
+
+        dev_snipe_percent = (
+            f"{(dev_balance_change_var / sol_data.token_supply * 100):.2f}"
+        )
+
+        if dev_holding_amount:
+            dev_holding_amount = math.floor(
+                dev_holding_amount / sol_data.token_supply * 100
+            )
+
+        # rug_score = f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {('✅' if int(rug['score']) < 400 else '🚨')}"
+        # wallets_string = format_wallets(sol_data.token_top20_wallets.wallets)
+
+        return_message = f"""\
+        💊  **{sol_data.token_name}** • **${(sol_data.token_symbol.upper())}**
+        `{address}`
+        
+        🕒  **Age**: {sol_data.token_age} 
+        💵  **Price**: ${sol_data.token_price}
+        💰  **MC**: ${format_values(sol_data.token_mcap)}
+
+        🕊️  **ATH**: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
+
+        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets.percent > 0 else ""}
+
+        🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amount}% ${(sol_data.token_symbol.upper())}
+        ┗ Sniped: {dev_snipe_percent}%
+        
+        📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+        """
+
+        # if await is_valid_image_url(session, sol_data.token_icon_url):
+        #     icon_url = sol_data.token_icon_url
+        # else:
+        icon_url = "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png"
+        print(icon_url)
+        return {
+            "icon": icon_url,
+            "text": textwrap.dedent(return_message),
+        }
+
+    except Exception as e:
+        print(f"ERROR PUMPFUN ROUTINE: {e}")
+        return {
+            "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
+            "text": textwrap.dedent("ERROR DEXSCREENR ROUTINE"),
+        }
 
 
 async def dexscreener_routine(
@@ -136,7 +218,7 @@ async def dexscreener_routine(
 
         {f"{data.boosts}" if data.boosts else ""}
         🔗  {data.links}
-        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} | Top: {sol_data.token_top20_wallets.percent}%
+        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets > 0 else ""}
 
         🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amount}% ${(data.symbol.upper())}
         ┗ Sniped: {dev_snipe_percent}%
@@ -144,8 +226,13 @@ async def dexscreener_routine(
         📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
         """
 
+        if await is_valid_image_url(session, sol_data.token_icon_url):
+            icon_url = sol_data.token_icon_url
+        else:
+            icon_url = "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png"
+
         return {
-            "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
+            "icon": icon_url,
             "text": textwrap.dedent(return_message),
         }
 
@@ -157,4 +244,4 @@ async def dexscreener_routine(
         }
 
 
-# asyncio.run(exec_main("2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv"))
+# asyncio.run(exec_main("BoEy2KhaWGgBCZNjBZX7RXKHuB8qWV37H4qYj97hpump"))
