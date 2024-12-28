@@ -1,4 +1,5 @@
 import logging
+from math import log
 
 from telegram import ForceReply, Update
 from telegram.ext import (
@@ -64,8 +65,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
     address = update.message.text
+    user = update.effective_user
+
+    logger.info(f"User {user.name} has sent {address}")
 
     if not is_valid_solana_address(address):
+        logger.error(f"{address} Invalid CA")
         await update.message.reply_text("Invalid CA")
         return
 
@@ -78,8 +83,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             caption=return_string["text"],
             parse_mode="Markdown",
         )
+
+        logger.info(f"{address} OK")
+
     else:
-        await update.message.reply_text("Invalid CA")
+        logger.error(f"{address} ERROR")
+        await update.message.reply_text("ERROR")
 
 
 def main() -> None:

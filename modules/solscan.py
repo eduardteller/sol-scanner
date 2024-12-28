@@ -7,6 +7,7 @@ from solders.pubkey import Pubkey
 from modules.data_processing import format_time
 from my_types import SolscanData
 import asyncio
+import json
 
 ONE_DAY = 86400
 
@@ -54,7 +55,7 @@ async def get_all_time_high(
         after = unix_timestamp - (ONE_DAY * 2)
         before = unix_timestamp + (ONE_DAY * 2)
 
-        birdeye_url = f"{birdeye_price_history_url}?address=9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump&address_type=token&type=15m&time_from={after}&time_to={before}"
+        birdeye_url = f"{birdeye_price_history_url}?address={address}&address_type=token&type=15m&time_from={after}&time_to={before}"
 
         birdeye_headers = {
             "accept": "application/json",
@@ -129,9 +130,14 @@ async def get_dev_balance_change(
             get_balance_change_resp_json["data"], key=lambda item: item["block_time"]
         )
 
-        buy_order = math.floor(
-            int(element["amount"]) / (10 ** int(element["token_decimals"]))
+        idk = max(
+            [
+                element["amount"],
+                element["pre_balance"],
+            ]
         )
+
+        buy_order = math.floor(int(idk) / (10 ** int(element["token_decimals"])))
 
         return buy_order
     except Exception as e:
@@ -165,7 +171,11 @@ async def get_dev_token_balance(
 
 
 async def exec_solscan(
-    solana_client: AsyncClient, address: str, pubkey: Pubkey, session: ClientSession
+    solana_client: AsyncClient,
+    address: str,
+    pubkey: Pubkey,
+    session: ClientSession,
+    pump: bool = False,
 ) -> SolscanData | None:
     try:
         token_meta_url = f"{solscan_meta_url}?address={address}"
@@ -209,7 +219,7 @@ async def exec_solscan(
                 token_supply,
                 session=session,
             ),
-            get_largest_wallets(solana_client, pubkey, token_supply),
+            get_largest_wallets(solana_client, pubkey, token_supply, pump),
         )
 
         return_object: SolscanData = SolscanData(

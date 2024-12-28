@@ -74,7 +74,7 @@ async def pumpfun_routine(
     public_key: str,
 ) -> str:
     try:
-        sol_data = await exec_solscan(rpc_client, address, public_key, session)
+        sol_data = await exec_solscan(rpc_client, address, public_key, session, True)
 
         if not sol_data:
             return {
@@ -101,6 +101,8 @@ async def pumpfun_routine(
                 dev_holding_amount / sol_data.token_supply * 100
             )
 
+        dexs = f"🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ???"
+
         # rug_score = f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {('✅' if int(rug['score']) < 400 else '🚨')}"
         # wallets_string = format_wallets(sol_data.token_top20_wallets.wallets)
 
@@ -109,11 +111,11 @@ async def pumpfun_routine(
         `{address}`
         
         🕒  **Age**: {sol_data.token_age} 
-        💵  **Price**: ${sol_data.token_price}
+        💵  **Price**: ${sol_data.token_price:.10f}
         💰  **MC**: ${format_values(sol_data.token_mcap)}
-
         🕊️  **ATH**: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
 
+        {dexs}
         👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets.percent > 0 else ""}
 
         🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amount}% ${(sol_data.token_symbol.upper())}
@@ -126,7 +128,7 @@ async def pumpfun_routine(
         #     icon_url = sol_data.token_icon_url
         # else:
         icon_url = "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png"
-        print(icon_url)
+
         return {
             "icon": icon_url,
             "text": textwrap.dedent(return_message),
@@ -155,7 +157,7 @@ async def dexscreener_routine(
         #     get_lp_burn(session, address),
         # )
         sol_data, sol_price, burn = await asyncio.gather(
-            exec_solscan(rpc_client, address, public_key, session),
+            exec_solscan(rpc_client, address, public_key, session, True),
             get_sol_price(session),
             get_lp_burn(session, address),
         )
@@ -186,7 +188,7 @@ async def dexscreener_routine(
             )
 
         # rug_score = f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {('✅' if int(rug['score']) < 400 else '🚨')}"
-        dexs = f"🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ✅"
+        dexs = f"🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ???"
         wallets_string = format_wallets(sol_data.token_top20_wallets.wallets)
 
         price_change_h = (
@@ -208,7 +210,7 @@ async def dexscreener_routine(
         🌊  LP: {math.floor(burn)}% Burnt
         
         🕒  **Age**: {sol_data.token_age} 
-        💵  **Price**: ${data.price}
+        💵  **Price**: ${sol_data.token_price:.10f}
         💰  **MC**: ${format_values(sol_data.token_mcap)}
         💧  **Liq**: ${format_values(data.liq)} ({math.floor(data.liq / sol_price)} SOL)
 
@@ -216,9 +218,9 @@ async def dexscreener_routine(
         📈  **Vol**: 1h: ${data.vol_h} | 1d: ${data.vol_d}
         📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
 
-        {f"{data.boosts}" if data.boosts else ""}
+        {dexs} {f"{data.boosts}" if data.boosts else ""}
         🔗  {data.links}
-        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets > 0 else ""}
+        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets.percent > 0 else ""}
 
         🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amount}% ${(data.symbol.upper())}
         ┗ Sniped: {dev_snipe_percent}%
@@ -240,8 +242,9 @@ async def dexscreener_routine(
         print(f"ERROR DEXSCREENR ROUTINE: {e}")
         return {
             "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
-            "text": textwrap.dedent("ERROR DEXSCREENR ROUTINE"),
+            "text": textwrap.dedent("ERROR DEXSCREENER ROUTINE"),
         }
 
 
 # asyncio.run(exec_main("BoEy2KhaWGgBCZNjBZX7RXKHuB8qWV37H4qYj97hpump"))
+# asyncio.run(exec_main("9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"))
