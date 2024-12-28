@@ -22,7 +22,7 @@ pump_fun_program_pubkey = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
 
 async def exec_main(address: str) -> str:
     solana_client = AsyncClient(
-        "https://warmhearted-cold-liquid.solana-mainnet.quiknode.pro/d66b4f59ba20fb9f1099e45b5f32f2d9a675caea/"
+        "https://mainnet.helius-rpc.com/?api-key=c9a8a340-586f-46dc-a789-daff8cbc2915"
     )
     session = ClientSession()
 
@@ -66,12 +66,23 @@ async def dexscreener_routine(
     public_key: str,
 ) -> str:
     try:
-        sol_data, sol_price, rug, burn = await asyncio.gather(
+        # sol_data, sol_price, rug, burn = await asyncio.gather(
+        #     exec_solscan(rpc_client, address, public_key, session),
+        #     get_sol_price(session),
+        #     get_rugcheck_score(session, address),
+        #     get_lp_burn(session, address),
+        # )
+        sol_data, sol_price, burn = await asyncio.gather(
             exec_solscan(rpc_client, address, public_key, session),
             get_sol_price(session),
-            get_rugcheck_score(session, address),
             get_lp_burn(session, address),
         )
+
+        if not sol_data:
+            return {
+                "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
+                "text": textwrap.dedent("ERROR SOLCAN"),
+            }
 
         sol_data: SolscanData = sol_data
 
@@ -133,18 +144,17 @@ async def dexscreener_routine(
         📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
         """
 
-        print(sol_data.token_icon_url)
-
         return {
-            "icon": (
-                "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png"
-            ),
+            "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
             "text": textwrap.dedent(return_message),
         }
 
     except Exception as e:
-        print(f"ERROR2!!!: {e}")
-        return {"error": str(e)}
+        print(f"ERROR DEXSCREENR ROUTINE: {e}")
+        return {
+            "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
+            "text": textwrap.dedent("ERROR DEXSCREENR ROUTINE"),
+        }
 
 
-# asyncio.run(exec_main("9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"))
+# asyncio.run(exec_main("2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv"))
