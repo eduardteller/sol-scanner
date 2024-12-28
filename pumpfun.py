@@ -1,19 +1,19 @@
 import requests
 import textwrap
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
-from data_processing import format_values, format_time
-from holders import get_holders
-from largest_accounts import get_largest_wallets
-from dexscreener import get_20_wallets, get_socials
-from pump_creation_time import get_token_creation_time
-from pump_metadata import get_pump_metadata
+from modules.data_processing import format_values, format_time
+from old.holders import get_holders
+from modules.largest_accounts import get_largest_wallets
+from dexscreener import format_wallets, get_social_links
+from pump.pump_creation_time import get_token_creation_time
+from pump.pump_metadata import get_pump_metadata
 import math
-from data_processing import format_time
+from modules.data_processing import format_time
 import json
 
 
-def pumpfun_routine(address: str, client: Client) -> str:
+def pumpfun_routine(address: str, client: AsyncClient) -> str:
     pub = Pubkey.from_string(address)
     age = format_time(get_token_creation_time(pub, client))
     data = get_pump_metadata(address)
@@ -34,7 +34,7 @@ def pumpfun_routine(address: str, client: Client) -> str:
 
     wallets = get_largest_wallets(client, pub)
 
-    wallets_string = get_20_wallets(wallets["wallets"])
+    wallets_string = format_wallets(wallets["wallets"])
     price = format(price, "f")
 
     message = f"""\

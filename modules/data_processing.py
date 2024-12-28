@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from typing import List
 
 
 def adjust_to_ten_digits(number: float) -> float:
@@ -69,3 +70,13 @@ def format_values(value: float | int) -> str:
         return f"{value / 1_000:.2f}K"
     else:
         return f"{value}"
+
+
+def format_wallets(wallets: List[str]) -> str:
+    return_string = ""
+    for i, idx in enumerate(wallets):
+        return_string += f"[🐳](https://solscan.io/account/{idx})"
+        if i == 10:
+            return_string += "\n"
+
+    return return_string

@@ -1,15 +1,15 @@
 import requests
 import textwrap
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
-from data_processing import format_values, format_time
-from holders import get_holders
-from largest_accounts import get_largest_wallets
-from dexscreener import get_20_wallets, get_socials
+from modules.data_processing import format_values, format_time
+from old.holders import get_holders
+from modules.largest_accounts import get_largest_wallets
+from dexscreener import format_wallets, get_social_links
 import math
 
 
-def moonshot_routine(address: str, client: Client) -> str:
+def moonshot_routine(address: str, client: AsyncClient) -> str:
     response = requests.get(
         f"https://api.dexscreener.com/latest/dex/tokens/{address}",
     )
@@ -26,13 +26,13 @@ def moonshot_routine(address: str, client: Client) -> str:
     age = format_time(pair["pairCreatedAt"])
     price_change = pair["priceChange"]["h1"]
     vol = format_values(pair["volume"]["h1"])
-    links = get_socials(pair)
+    links = get_social_links(pair)
 
     holders = get_holders(client, address)
 
     wallets = get_largest_wallets(client, pub)
 
-    wallets_string = get_20_wallets(wallets["wallets"])
+    wallets_string = format_wallets(wallets["wallets"])
 
     if pair["priceChange"]["h1"] < 0:
         price_change = f"{price_change}% 🔻"

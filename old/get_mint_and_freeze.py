@@ -1,9 +1,9 @@
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 from spl.token._layouts import MINT_LAYOUT
 
 
-def get_mint_and_freeze_authority(client: Client, address: Pubkey) -> str:
+def get_mint_and_freeze_authority(client: AsyncClient, address: Pubkey) -> str:
 
     return_string = ""
 

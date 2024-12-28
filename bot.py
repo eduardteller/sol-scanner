@@ -9,9 +9,8 @@ from telegram.ext import (
     filters,
 )
 import textwrap
-from solders.pubkey import Pubkey  # Use solders for public keys
-from solana.rpc.async_api import AsyncClient
-from entry import main as mainSol
+from entry import exec_main
+import asyncio
 
 # Enable logging
 logging.basicConfig(
@@ -64,11 +63,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
-    if not is_valid_solana_address(update.message.text):
+    address = update.message.text
+
+    if not is_valid_solana_address(address):
         await update.message.reply_text("Invalid CA")
         return
-    address = update.message.text
-    return_string = mainSol(address)  # Use solders for public key
+
+    return_string = await exec_main(address)
 
     if return_string:  # Check if the result contains
         await context.bot.send_photo(

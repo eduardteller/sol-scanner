@@ -1,29 +1,30 @@
-import requests
+from aiohttp import ClientSession
 import math
 from datetime import datetime
-from solana.rpc.api import Client
-from largest_accounts import get_largest_wallets
+from solana.rpc.async_api import AsyncClient
+from modules.largest_accounts import get_largest_wallets
 from solders.pubkey import Pubkey
-from data_processing import format_time, format_values
+from modules.data_processing import format_time
 from my_types import SolscanData
+import asyncio
 
 ONE_DAY = 86400
 
 solscan_headers = {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5NzIxODg2MDgsImVtYWlsIjoiZWR1YXJkdGVsbGVyMUBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5NzIxODh9.IFTQ4byOepGx1DalTcaNoVsB38faQ0hHHTVwJ3EH2iM"
 }
-
 solscan_account_data_url = "https://pro-api.solscan.io/v2.0/account/detail"
 solscan_account_balance_change_url = (
     "https://pro-api.solscan.io/v2.0/account/balance_change"
 )
-
 solscan_price_url = "https://pro-api.solscan.io/v2.0/token/price"
 solscan_meta_url = "https://pro-api.solscan.io/v2.0/token/meta"
 birdeye_price_history_url = "https://public-api.birdeye.so/defi/history_price"
 
 
-def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
+async def get_all_time_high(
+    creation_timestamp: int, address: str, supply: int, session: ClientSession
+) -> float:
     current_date = datetime.now().strftime("%Y%m%d")
     token_creation = datetime.fromtimestamp(creation_timestamp).strftime("%Y%m%d")
 
@@ -31,9 +32,9 @@ def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
 
     solscan_url = f"{solscan_price_url}?address={address}&{solscan_filter}"
 
-    solscan_price_history = requests.get(solscan_url, headers=solscan_headers)
+    solscan_price_history = await session.get(solscan_url, headers=solscan_headers)
 
-    solscan_price_history_processed = solscan_price_history.json()
+    solscan_price_history_processed = await solscan_price_history.json()
 
     if (
         not solscan_price_history_processed["success"]
@@ -60,35 +61,33 @@ def get_ath(creation_timestamp: int, address: str, supply: int) -> float:
         "X-API-KEY": "8f9116c123b24a57b4b9a39ad33362c6",
     }
 
-    birdeye_price_data_raw = requests.get(birdeye_url, headers=birdeye_headers)
+    birdeye_price_data_raw = await session.get(birdeye_url, headers=birdeye_headers)
 
-    birdeye_price_data = birdeye_price_data_raw.json()
+    birdeye_price_data = await birdeye_price_data_raw.json()
 
     max_price2 = max(item["value"] for item in birdeye_price_data["data"]["items"])
 
     return math.floor(float(max_price2) * supply)
 
 
-def solana_price() -> float:
+async def get_sol_price(session: ClientSession) -> float:
     sol_price_url = (
         f"{solscan_price_url}?address=So11111111111111111111111111111111111111112"
     )
 
-    sol_price_resp = requests.get(sol_price_url, headers=solscan_headers)
-
-    sol_price_resp_json = sol_price_resp.json()
+    sol_price_resp = await session.get(sol_price_url, headers=solscan_headers)
+    sol_price_resp_json = await sol_price_resp.json()
 
     sol_price = float(sol_price_resp_json["data"][0]["price"])
 
     return sol_price
 
 
-def dev_balance(account: str) -> str:
+async def get_dev_balance(account: str, session: ClientSession) -> str:
     get_balance_url = f"{solscan_account_data_url}?address={account}"
 
-    get_balance_resp = requests.get(get_balance_url, headers=solscan_headers)
-
-    get_balance_resp_json = get_balance_resp.json()
+    get_balance_resp = await session.get(get_balance_url, headers=solscan_headers)
+    get_balance_resp_json = await get_balance_resp.json()
 
     if "lamports" not in get_balance_resp_json["data"]:
         return "0"
@@ -98,14 +97,16 @@ def dev_balance(account: str) -> str:
     return balance
 
 
-def dev_balance_change(account: str, address: str) -> int:
+async def get_dev_balance_change(
+    account: str, address: str, session: ClientSession
+) -> int:
     get_balance_change_url = f"{solscan_account_balance_change_url}?address={account}&token={address}&page_size=10&page=1&remove_spam=true&flow=in&sort_by=block_time&sort_order=desc"
 
-    get_balance_change_resp = requests.get(
+    get_balance_change_resp = await session.get(
         get_balance_change_url, headers=solscan_headers
     )
 
-    get_balance_change_resp_json = get_balance_change_resp.json()
+    get_balance_change_resp_json = await get_balance_change_resp.json()
 
     if not get_balance_change_resp_json["data"]:
         return 0
@@ -121,12 +122,14 @@ def dev_balance_change(account: str, address: str) -> int:
     return buy_order
 
 
-def dev_holding_sauce(account: str, address: str) -> int:
+async def get_dev_token_balance(
+    account: str, address: str, session: ClientSession
+) -> int:
     url = f"https://pro-api.solscan.io/v2.0/account/token-accounts?address={account}&type=token&page=1&page_size=30&hide_zero=true"
 
-    resp = requests.get(url, headers=solscan_headers)
+    resp = await session.get(url, headers=solscan_headers)
 
-    data = resp.json()
+    data = await resp.json()
 
     token_balance = 0
 
@@ -140,12 +143,13 @@ def dev_holding_sauce(account: str, address: str) -> int:
     return token_balance
 
 
-def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> SolscanData:
+async def exec_solscan(
+    solana_client: AsyncClient, address: str, pubkey: Pubkey, session: ClientSession
+) -> SolscanData:
     token_meta_url = f"{solscan_meta_url}?address={address}"
 
-    solscan_token_meta_resp = requests.get(
-        token_meta_url, headers=solscan_headers
-    ).json()
+    solscan_token_meta_resp = await session.get(token_meta_url, headers=solscan_headers)
+    solscan_token_meta_resp = await solscan_token_meta_resp.json()
 
     if not solscan_token_meta_resp["success"] or not solscan_token_meta_resp["data"]:
         print("Failed to fetch metadata")
@@ -171,11 +175,20 @@ def solscan_start(solana_client: Client, address: str, pubkey: Pubkey) -> Solsca
 
     token_creator: str = solscan_token_meta_resp["data"]["creator"]
 
-    token_ath: int = get_ath(
-        int(solscan_token_meta_resp["data"]["created_time"]), address, token_supply
-    )
+    # token_ath: int = get_all_time_high(
+    #     int(solscan_token_meta_resp["data"]["created_time"]), address, token_supply
+    # )
+    # token_top20_wallets = get_largest_wallets(solana_client, pubkey, token_supply)
 
-    token_top20_wallets = get_largest_wallets(solana_client, pubkey, token_supply)
+    token_ath, token_top20_wallets = await asyncio.gather(
+        get_all_time_high(
+            int(solscan_token_meta_resp["data"]["created_time"]),
+            address,
+            token_supply,
+            session=session,
+        ),
+        get_largest_wallets(solana_client, pubkey, token_supply),
+    )
 
     return_object: SolscanData = SolscanData(
         token_name=token_name,

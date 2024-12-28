@@ -1,15 +1,17 @@
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 from my_types import Wallets
 
 
-def get_largest_wallets(client: Client, address: Pubkey, supply: int) -> Wallets:
+async def get_largest_wallets(
+    client: AsyncClient, address: Pubkey, supply: int
+) -> Wallets:
     # Get largest accounts for the token mint
-    response = client.get_token_largest_accounts(address)
+    response = await client.get_token_largest_accounts(address)
     wallets = []
     # val = response["context"]
     combined = 0
-    for i, item in enumerate(response.value):
+    for item in response.value:
         wallets.append(item.address)
         combined += item.amount.ui_amount
 

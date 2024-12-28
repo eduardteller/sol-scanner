@@ -1,8 +1,8 @@
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 
 
-def get_token_creation_time(mint_address: Pubkey, client: Client) -> int | None:
+def get_token_creation_time(mint_address: Pubkey, client: AsyncClient) -> int | None:
     before = None
     try:
         signatures = client.get_signatures_for_address(

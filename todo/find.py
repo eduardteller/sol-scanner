@@ -1,13 +1,13 @@
 import requests
 import json
-from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 
 GQL_ENDPOINT = "https://programs.shyft.to/v0/graphql/?api_key=WXLnaB1VZbEZMfic&network=mainnet-beta"
 RPC_ENDPOINT = "https://rpc.shyft.to?api_key=WXLnaB1VZbEZMfic"
 
 # Create a Solana client to fetch on-chain data
-solana_client = Client(RPC_ENDPOINT)
+solana_client = AsyncClient(RPC_ENDPOINT)
 
 
 def query_lp_mint_info(address: str):
