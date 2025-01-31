@@ -10,17 +10,7 @@ import asyncio
 import json
 
 ONE_DAY = 86400
-
-solscan_headers = {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MzQ5NzIxODg2MDgsImVtYWlsIjoiZWR1YXJkdGVsbGVyMUBnbWFpbC5jb20iLCJhY3Rpb24iOiJ0b2tlbi1hcGkiLCJhcGlWZXJzaW9uIjoidjIiLCJpYXQiOjE3MzQ5NzIxODh9.IFTQ4byOepGx1DalTcaNoVsB38faQ0hHHTVwJ3EH2iM"
-}
-solscan_account_data_url = "https://pro-api.solscan.io/v2.0/account/detail"
-solscan_account_balance_change_url = (
-    "https://pro-api.solscan.io/v2.0/account/balance_change"
-)
-solscan_price_url = "https://pro-api.solscan.io/v2.0/token/price"
-solscan_meta_url = "https://pro-api.solscan.io/v2.0/token/meta"
-birdeye_price_history_url = "https://public-api.birdeye.so/defi/history_price"
+birdeye_price_history_url = "https://public-api.birdeye.so/"
 
 
 async def get_all_time_high(
