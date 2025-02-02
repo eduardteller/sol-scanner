@@ -9,11 +9,12 @@ async def get_lp_burn(session: ClientSession, address: str) -> float:
         async with session.get(url, headers=headers) as response:
             resp = await response.json()
 
-            if not resp["success"]:
-                return {"error": "No data found"}
+            if not resp["success"] or resp["data"]["count"] == 0:
+                return None
 
             burn_amount = float(resp["data"]["data"][0]["burnPercent"])
 
             return burn_amount
     except Exception as e:
-        return {"error": str(e)}
+        print(f"ERROR LP BURN: {e}")
+        return None

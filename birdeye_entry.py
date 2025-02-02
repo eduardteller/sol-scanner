@@ -1,42 +1,26 @@
 import textwrap
 from aiohttp import ClientSession
-from solana.rpc.async_api import AsyncClient
-from solders.pubkey import Pubkey
-from my_types import DexscreenerData, SolscanData
+import API_KEYS
 import math
 from modules.raydium import get_lp_burn
-from modules.birdeye import (
-    exec_solscan,
-    get_sol_price,
-    get_dev_balance,
-    get_dev_balance_change,
-    get_dev_token_balance,
-)
-from modules.data_processing import format_values, format_wallets
+from modules.birdeye import get_birdeye_data
+from modules.data_processing import format_values, format_time
 import asyncio
-
-pump_fun_program_pubkey = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
 
 
 async def exec_main(address: str) -> str:
-    solana_client = AsyncClient(
-        "https://mainnet.helius-rpc.com/?api-key=c9a8a340-586f-46dc-a789-daff8cbc2915"
-    )
+
     session = ClientSession()
-
     try:
-        public_key = Pubkey.from_string(address)
-
-        final = await start_routine(address, solana_client, session, public_key)
-
+        final = await start_routine(address, session)
+        # print(final["text"])
         return final
 
     except Exception as e:
-        print(f"ERROR!!!: {e}")
-        return {"error": str(e)}
+        print(f"ERROR exec_main: {e}")
+        exit(1)
 
     finally:
-        await solana_client.close()
         await session.close()
 
 
@@ -52,99 +36,143 @@ async def is_valid_image_url(session: ClientSession, url: str) -> bool:
         return False
 
 
+async def get_dex(session: ClientSession, address: str) -> bool:
+    try:
+        birdeye_headers = {
+            "accept": "application/json",
+            "x-chain": "solana",
+            "X-API-KEY": API_KEYS.BIRDEYE_API,
+        }
+        url = f"https://api.dexscreener.com/tokens/v1/solana/{address}"
+        resp = await session.get(url, headers=birdeye_headers)
+        data = await resp.json()
+
+        if not data or not data[0]:
+            raise Exception("Failed to fetch data")
+
+        return data[0]
+    except Exception as e:
+        print(f"ERROR DEX: {e}")
+        return False
+
+
 async def start_routine(
-    data: DexscreenerData,
     address: str,
-    rpc_client: AsyncClient,
     session: ClientSession,
-    public_key: str,
 ) -> str:
     try:
-        sol_data, sol_price, burn = await asyncio.gather(
-            exec_solscan(rpc_client, address, public_key, session, True),
-            get_sol_price(session),
+        birdeye, burn, dex = await asyncio.gather(
+            get_birdeye_data(address, session),
             get_lp_burn(session, address),
+            get_dex(session, address),
         )
 
-        if not sol_data:
-            return {
-                "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
-                "text": textwrap.dedent("ERROR SOLCAN"),
-            }
+        print(birdeye["creation_time"])
 
-        sol_data: SolscanData = sol_data
+        if not birdeye:
+            raise Exception("Failed to fetch data")
 
-        dev_balance_sol, dev_balance_change_var, dev_holding_amount = (
-            await asyncio.gather(
-                get_dev_balance(sol_data.token_creator, session),
-                get_dev_balance_change(sol_data.token_creator, address, session),
-                get_dev_token_balance(sol_data.token_creator, address, session),
-            )
-        )
+        if not dex:
+            dex_type = "💊"
 
-        dev_snipe_percent = (
-            f"{(dev_balance_change_var / sol_data.token_supply * 100):.2f}"
-        )
-
-        if dev_holding_amount:
-            dev_holding_amount = math.floor(
-                dev_holding_amount / sol_data.token_supply * 100
-            )
-
-        # rug_score = f"📢  [Rug Score](https://rugcheck.xyz/tokens/{address}): {rug['score']} {('✅' if int(rug['score']) < 400 else '🚨')}"
-        dexs = f"🦅  [DexS](https://dexscreener.com/solana/{address}): Paid ???"
-        wallets_string = format_wallets(sol_data.token_top20_wallets.wallets)
-
-        price_change_h = (
-            f"{data.price_change_h}% 🔻"
-            if data.price_change_h < 0
-            else f"{data.price_change_h}% 🔼"
-        )
-        price_change_d = (
-            f"{data.price_change_d}% 🔻"
-            if data.price_change_d < 0
-            else f"{data.price_change_d}% 🔼"
-        )
-
-        return_message = f"""\
-        💠  **{data.name}** • **${(data.symbol.upper())}**
-        `{address}`
-        
-        ➕  **Mint**: {"No ✅" if not sol_data.token_mint_auth else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not sol_data.token_freeze_auth else "Yes 🚨"}
-        🌊  LP: {math.floor(burn)}% Burnt
-        
-        🕒  **Age**: {sol_data.token_age} 
-        💵  **Price**: ${sol_data.token_price:.10f}
-        💰  **MC**: ${format_values(sol_data.token_mcap)}
-        💧  **Liq**: ${format_values(data.liq)} ({math.floor(data.liq / sol_price)} SOL)
-
-        🕊️  **ATH**: ${format_values(sol_data.token_ath)} ({(sol_data.token_ath / sol_data.token_mcap):.2f}X)
-        📈  **Vol**: 1h: ${data.vol_h} | 1d: ${data.vol_d}
-        📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
-
-        {dexs} {f"{data.boosts}" if data.boosts else ""}
-        🔗  {data.links}
-        👥  [Hodls](https://solscan.io/token/{address}#holders): {sol_data.token_holders} {f"| Top: {sol_data.token_top20_wallets.percent}%" if sol_data.token_top20_wallets.percent > 0 else ""}
-
-        🛠️ [Dev](https://solscan.io/account/{sol_data.token_creator}) : {dev_balance_sol} SOL | {dev_holding_amount}% ${(data.symbol.upper())}
-        ┗ Sniped: {dev_snipe_percent}%
-        
-        📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
-        """
-
-        if await is_valid_image_url(session, sol_data.token_icon_url):
-            icon_url = sol_data.token_icon_url
         else:
-            icon_url = "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png"
+            if dex["dexId"] == "pumpfun":
+                dex_type = "💊"
+            elif dex["dexId"] == "moonshot":
+                dex_type = "🌕"
+            else:
+                dex_type = "💠"
+
+        if dex and not (dex["dexId"] == "pumpfun"):
+            price_change_h = (
+                f"{dex['priceChange']['h1']}% 🔻"
+                if dex["priceChange"]["h1"] < 0
+                else f"{dex['priceChange']['h1']}% 🔼"
+            )
+            price_change_d = (
+                f"{dex['priceChange']['h24']}% 🔻"
+                if dex["priceChange"]["h24"] < 0
+                else f"{dex['priceChange']['h24']}% 🔼"
+            )
+
+        if not dex or dex["dexId"] == "pumpfun":
+            return_message = f"""\
+            {dex_type}  **{birdeye["name"]}** • **${(birdeye["symbol"].upper())}**
+            `{address}`
+            
+            ➕  **Mint**: {"No ✅" if not birdeye['mint'] else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not birdeye['freeze'] else "Yes 🚨"}
+            
+            🕒  **Age**: {format_time(birdeye['creation_time'])} 
+            💵  **Price**: ${birdeye['price']:.10f}
+            💰  **MC**: ${format_values(birdeye['mcap'])}
+
+            🕊️  **ATH**: ${format_values(birdeye['ath'])} ({(birdeye['ath'] / birdeye['mcap']):.2f}X)
+
+            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
+
+            🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
+            
+            📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+            """
+
+        elif dex["dexId"] == "moonshot":
+            return_message = f"""\
+            {dex_type}  **{birdeye["name"]}** • **${(birdeye["symbol"].upper())}**
+            `{address}`
+            
+            ➕  **Mint**: {"No ✅" if not birdeye['mint'] else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not birdeye['freeze'] else "Yes 🚨"}
+            
+            🕒  **Age**: {format_time(birdeye['creation_time'])} 
+            💵  **Price**: ${birdeye['price']:.10f}
+            💰  **MC**: ${format_values(birdeye['mcap'])}
+
+            📈  **Vol**: 1h: ${format_values(dex["volume"]["h1"])} | 1d: ${format_values(dex["volume"]["h24"])}
+            📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
+
+            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
+
+            🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
+            
+            📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+            """
+
+        else:
+            return_message = f"""\
+            {dex_type}  **{birdeye["name"]}** • **${(birdeye["symbol"].upper())}**
+            `{address}`
+            
+            ➕  **Mint**: {"No ✅" if not birdeye['mint'] else "Yes 🚨"} | 🧊 **Freeze**: {"No ✅" if not birdeye['freeze'] else "Yes 🚨"}
+            🌊  LP: {math.floor(burn)}% Burnt
+            
+            🕒  **Age**: {format_time(birdeye['creation_time'])} 
+            💵  **Price**: ${birdeye['price']:.10f}
+            💰  **MC**: ${format_values(birdeye['mcap'])} | **FDV**: ${format_values(birdeye['fdv'])}
+            💧  **Liq**: ${format_values(birdeye['liquidity'])} ({math.floor(birdeye['liquidity'] / birdeye['sol_price'])} SOL)
+
+            🕊️  **ATH**: ${format_values(birdeye['ath'])} ({(birdeye['ath'] / birdeye['mcap']):.2f}X)
+            📈  **Vol**: 1h: ${format_values(dex["volume"]["h1"])} | 1d: ${format_values(dex["volume"]["h24"])}
+            📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
+
+            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
+
+            🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
+            
+            📊 **Chart**  [DEX](https://dexscreener.com/solana/{address}) | [Phtn](https://photon-sol.tinyastro.io/en/lp/{address}) | [Brdeye](https://www.birdeye.so/token/{address}?chain=solana)
+            """
 
         return {
-            "icon": icon_url,
+            "icon": birdeye["icon"],
             "text": textwrap.dedent(return_message),
         }
 
     except Exception as e:
-        print(f"ERROR DEXSCREENR ROUTINE: {e}")
-        return {
-            "icon": "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)#/media/File:Solana_logo.png",
-            "text": textwrap.dedent("ERROR DEXSCREENER ROUTINE"),
-        }
+        print(f"ERROR MAIN ROUTINE: {e}")
+        return None
+
+
+# exec_main("9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump")
+# asyncio.run(exec_main("BoEy2KhaWGgBCZNjBZX7RXKHuB8qWV37H4qYj97hpump"))
+# asyncio.run(exec_main("BNu5McPaw1YUfLcsxKoQtiurvM33rA7jsW1rdYM2moon"))

@@ -10,7 +10,7 @@ from telegram.ext import (
     filters,
 )
 import textwrap
-from entry import exec_main
+from birdeye_entry import exec_main
 import asyncio
 
 # Enable logging
