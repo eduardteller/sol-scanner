@@ -74,11 +74,6 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Invalid CA")
         return
 
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Gathering data, please wait 5-10 seconds...",
-    )
-
     return_string = await exec_main(address)
 
     if return_string:  # Check if the result contains
@@ -102,7 +97,7 @@ def main() -> None:
     # Create the Application and pass it your bot's token.
     application = (
         Application.builder()
-        .token("7573882976:AAGp2VR9oZWnwmI6SUBg2J9QSVkMjeoSwsE")
+        .token("7684315666:AAHUIvIwwDkiztKyRdHDoPYnZ0spScazkxo")
         .build()
     )
 
