@@ -67,8 +67,6 @@ async def start_routine(
             get_dex(session, address),
         )
 
-        print(birdeye["creation_time"])
-
         if not birdeye:
             raise Exception("Failed to fetch data")
 
@@ -95,6 +93,10 @@ async def start_routine(
                 else f"{dex['priceChange']['h24']}% 🔼"
             )
 
+        links_exist = bool(
+            birdeye["twitter"] or birdeye["telegram"] or birdeye["website"]
+        )
+
         if not dex or dex["dexId"] == "pumpfun":
             return_message = f"""\
             {dex_type}  **{birdeye["name"]}** • **${(birdeye["symbol"].upper())}**
@@ -108,7 +110,7 @@ async def start_routine(
 
             🕊️  **ATH**: ${format_values(birdeye['ath'])} ({(birdeye['ath'] / birdeye['mcap']):.2f}X)
 
-            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            {"🔗" if links_exist else ""}  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
             👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
 
             🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
@@ -130,7 +132,7 @@ async def start_routine(
             📈  **Vol**: 1h: ${format_values(dex["volume"]["h1"])} | 1d: ${format_values(dex["volume"]["h24"])}
             📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
 
-            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            {"🔗" if links_exist else ""}  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
             👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
 
             🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
@@ -155,7 +157,7 @@ async def start_routine(
             📈  **Vol**: 1h: ${format_values(dex["volume"]["h1"])} | 1d: ${format_values(dex["volume"]["h24"])}
             📈  **Price**: 1h: {price_change_h} | 1d: {price_change_d}
 
-            🔗  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
+            {"🔗" if links_exist else ""}  {f"[X]({birdeye['twitter']})" if birdeye['twitter'] else ""} {f"[T]({birdeye['telegram']})" if birdeye['telegram'] else ""} {f"[W]({birdeye['website']})" if birdeye['website'] else ""}
             👥  [Hodls](https://solscan.io/token/{address}#holders): {birdeye['holders']} {f"| Top: {birdeye['top_10_holder_percent']}%"}
 
             🛠️ [Dev](https://solscan.io/account/{birdeye['creator_address']}) : {birdeye['creator_balance']} SOL | {birdeye['creator_percentage']}% ${(birdeye['symbol'].upper())}
