@@ -1,97 +1,86 @@
-# Solana Token Scanner Telegram Bot 🤖
+# Solana Token Scanner Bot
 
-A comprehensive Telegram bot that provides detailed analysis and information about Solana tokens, including tokens from PumpFun, Moonshot, and DEX platforms.
+A comprehensive Telegram bot that provides real-time analysis and risk assessment for Solana blockchain tokens. Users input a token contract address and receive detailed financial metrics, security analysis, and market data.
 
-## 🌟 Features
+## System Functionality
 
-### Token Analysis
-- **Multi-Platform Support**: Analyzes tokens from PumpFun, Moonshot, and traditional DEX platforms
-- **Comprehensive Token Data**: 
-  - Price, market cap, and liquidity information
-  - Token age and creation details
-  - All-time high (ATH) tracking
-  - Volume metrics (1h/24h)
-  - Price change indicators
+**Core Features:**
 
-### Security Analysis
-- **Mint/Freeze Authority Check**: Identifies if tokens can be minted or frozen
-- **LP Burn Analysis**: Calculates liquidity pool burn percentage
-- **Developer Analysis**:
-  - Developer wallet balance tracking
-  - Developer token holdings percentage
-  - Snipe percentage calculation
-- **Top Holders Analysis**: Shows concentration of top wallets
+- Real-time token price, market cap, and trading volume analysis
+- Liquidity pool burn percentage calculation for rug-pull detection
+- Developer wallet tracking and token distribution analysis
+- Social media links extraction and validation
+- Multi-platform support (Pump.fun, Moonshot, DEX trading pairs)
+- Token holder concentration analysis (top 20 wallets)
+- All-time high price tracking and performance metrics
+- Mint/freeze authority verification for security assessment
 
-### Social & External Links
-- **Social Media Integration**: Links to Twitter, Telegram, and websites
-- **Chart Links**: Direct links to DexScreener, Photon, and Birdeye
-- **Holder Information**: Links to Solscan for detailed holder analysis
+**Risk Assessment:**
 
-## 📁 Project Structure
+- Automatic detection of suspicious token characteristics
+- LP burn percentage analysis for liquidity safety
+- Developer token holdings and transaction history
+- Token authority permissions (mint/freeze capabilities)
 
-```
-sol-scanner-13-07/
-├── bot.py                 # Main Telegram bot entry point
-├── birdeye_entry.py       # Birdeye API integration (primary entry)
-├── entry.py              # Alternative entry point with Solscan integration
-├── dexscreener.py        # DexScreener API integration
-├── moonshot.py           # Moonshot platform specific logic
-├── my_types.py           # Type definitions and data classes
-├── API_KEYS.py           # API configuration file
-├── requirements.txt      # Python dependencies
-├── Procfile             # Heroku deployment configuration
-├── runtime.txt          # Python runtime version
-│
-├── modules/             # Core functionality modules
-│   ├── birdeye.py       # Birdeye API functions
-│   ├── data_processing.py # Data formatting utilities
-│   ├── largest_accounts.py # Top wallet analysis
-│   ├── raydium.py       # Raydium DEX integration
-│   └── rugcheck.py      # Rugcheck API integration
-│
-├── pump/                # PumpFun specific modules
-│   ├── pump_creation_time.py # Token creation time tracking
-│   └── pump_metadata.py     # Pump metadata retrieval
-│
-└── todo/                # Development and testing scripts
-    ├── beach.py         # Solana Beach API testing
-    ├── bird.py          # Birdeye API testing
-    ├── burn.py          # LP burn testing
-    └── find.py          # Token discovery utilities
-```
+## Technologies Used
 
-## 📋 Usage
+**Backend & APIs:**
 
-### Basic Commands
-1. **Start the bot**: Send `/start` to get a welcome message
-2. **Get help**: Send `/help` for assistance
-3. **Analyze token**: Send any valid Solana token address (44 characters, Base58)
+- Python 3.10 with asyncio for concurrent processing
+- Solana RPC integration via `solana-py` and `solders`
+- REST API integrations (Birdeye, DexScreener, Raydium, RugCheck)
+- aiohttp for asynchronous HTTP requests
 
-### Example Token Addresses
-- PumpFun token: `9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump`
-- Moonshot token: `BNu5McPaw1YUfLcsxKoQtiurvM33rA7jsW1rdYM2moon`
-- DEX token: Any standard Solana token address
+**Bot Framework:**
 
-### Sample Output
-The bot returns formatted messages with:
-- Token name, symbol, and icon
-- Security indicators (mint/freeze authority)
-- Price and market data
-- Developer information
-- Holder statistics
-- Chart and analysis links
+- python-telegram-bot for Telegram integration
+- Real-time messaging with formatted responses and images
 
-## 🔌 API Integrations
+**Data Processing:**
 
-### Primary APIs
-- **Birdeye**: Token metadata, pricing, security analysis
-- **DexScreener**: Trading data, social links, volume metrics
-- **Raydium**: Liquidity pool analysis and burn percentages
-- **Helius**: Solana blockchain RPC access
-- **RugCheck**: Token security scoring (optional)
+- Custom data structures with dataclasses
+- Financial metrics calculation and formatting
+- Time-based analysis with datetime processing
 
-### Data Sources
-- **Solscan**: Holder analysis and transaction history
-- **Photon**: Advanced trading interface links
-- **Pump.fun**: PumpFun specific token data
+**Deployment:**
 
+- Heroku-ready with Procfile configuration
+- Environment variable management for API keys
+
+## Key Skills Demonstrated
+
+**Blockchain Development:**
+
+- Solana blockchain interaction and RPC client implementation
+- Token metadata extraction and on-chain data analysis
+- Smart contract interaction for liquidity and authority verification
+
+**Asynchronous Programming:**
+
+- Concurrent API calls using asyncio.gather()
+- Efficient session management with aiohttp
+- Non-blocking operations for real-time responsiveness
+
+**API Integration:**
+
+- Multiple third-party API orchestration (Birdeye, DexScreener, Raydium)
+- Error handling and fallback mechanisms
+- Rate limiting and request optimization
+
+**Financial Analysis:**
+
+- Complex financial metrics calculation
+- Risk assessment algorithms
+- Market data aggregation and trend analysis
+
+**Bot Development:**
+
+- Telegram Bot API implementation
+- User input validation and sanitization
+- Rich message formatting with embedded links and emojis
+
+**System Architecture:**
+
+- Modular code organization with separation of concerns
+- Type safety with Python dataclasses
+- Scalable error handling and logging
