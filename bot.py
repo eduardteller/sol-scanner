@@ -97,7 +97,7 @@ def main() -> None:
     # Create the Application and pass it your bot's token.
     application = (
         Application.builder()
-        .token("7684315666:AAHUIvIwwDkiztKyRdHDoPYnZ0spScazkxo")
+        .token("NONE")
         .build()
     )
 
